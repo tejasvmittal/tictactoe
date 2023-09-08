@@ -1,1 +1,3 @@
-        # self.print_caption()
+[[inf, inf, inf],
+                           [inf, inf, inf],
+                           [inf, inf, inf]]
