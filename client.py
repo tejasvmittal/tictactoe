@@ -1,6 +1,6 @@
 import pygame as pg
 import sys
-from random import randint
+from network import Network 
 
 SCREEN_WIDTH = 600
 CELL_SIZE = SCREEN_WIDTH // 3
