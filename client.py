@@ -1,12 +1,16 @@
 import pygame as pg
 import sys
-from network import Network 
+from network import Network
+pg.font.init()
 
 SCREEN_WIDTH = 600
 CELL_SIZE = SCREEN_WIDTH // 3
 inf = float("inf")
 vec2 = pg.math.Vector2
 CELL_CENTER = vec2(CELL_SIZE / 2)
+win = pg.display.set_mode([SCREEN_WIDTH] * 2)
+font_type = "comicsans"
+
 
 class TicTacToe:
     def __init__(self, game):
@@ -18,37 +22,23 @@ class TicTacToe:
         self.game_array = [[inf, inf, inf],
                            [inf, inf, inf],
                            [inf, inf, inf]]
-        self.player = randint(0, 1)  # generate a random player to start with
-        self.possible_matches = [[(0,0), (0,1), (0,2)],
-                                 [(1,0), (1,1), (1,2)],
-                                 [(2,0), (2, 1), (2,2)],
-                                 [(0,0), (1,0), (2,0)],
-                                 [(1,0), (1,1), (1,2)],
-                                 [(2,0), (2,1), (2,2)],
-                                 [(0,0), (1,1), (2,2)],
-                                 [(0,2), (1,1), (2,0)],
-                                 [(0,1),(1,1),(2,1)]
-                                 ] # All possible line crosses for a player to win the game.
+        self.player = 0  # generate a random player to start with
+        self.possible_matches = [[(0, 0), (0, 1), (0, 2)],
+                                 [(1, 0), (1, 1), (1, 2)],
+                                 [(2, 0), (2, 1), (2, 2)],
+                                 [(0, 0), (1, 0), (2, 0)],
+                                 [(1, 0), (1, 1), (1, 2)],
+                                 [(2, 0), (2, 1), (2, 2)],
+                                 [(0, 0), (1, 1), (2, 2)],
+                                 [(0, 2), (1, 1), (2, 0)],
+                                 [(0, 1), (1, 1), (2, 1)]
+                                 ]  # All possible line crosses for a player to win the game.
         self.winner = None
         self.num_steps = 0
         self.scribble_audio = pg.mixer.Sound("audio\scribble.wav")
         self.win_audio = pg.mixer.Sound("audio\winner_clap.wav")
         self.new_game_audio = pg.mixer.Sound("audio\gong.wav")
         pg.mixer.Sound.play(self.new_game_audio)
-    
-    def check_winner(self):
-        for line in self.possible_matches:
-            get_sum = sum(self.game_array[i][j] for i, j in line)
-            if get_sum == 0 or get_sum == 3:
-                self.winner = 'XO'[get_sum == 0] # indexing the string 'XO' based on the boolean condition
-                # To draw a line we need starting and ending coordinates 
-                self.winner_line = [vec2(line[0][::-1]) * CELL_SIZE + CELL_CENTER, vec2(line[2][::-1]) * CELL_SIZE + CELL_CENTER]
-                pg.mixer.Sound.play(self.win_audio)
-    
-    def draw_winner_line(self):
-        if self.winner:
-            pg.draw.line(self.game.screen, 'white', self.winner_line[0], self.winner_line[1], CELL_SIZE // 8)
-
 
     def run_game_process(self):
         mouse_cell = vec2(pg.mouse.get_pos()) // CELL_SIZE
@@ -62,19 +52,17 @@ class TicTacToe:
             self.num_steps += 1
             self.check_winner()
 
-
     def draw_objects(self):
         for y, row in enumerate(self.game_array):
             for x, obj in enumerate(row):
                 if obj != inf:
-                    self.game.screen.blit(self.x_img if obj else self.o_img, vec2(x, y) * CELL_SIZE)
-
+                    self.game.screen.blit(
+                        self.x_img if obj else self.o_img, vec2(x, y) * CELL_SIZE)
 
     def draw(self):
         self.game.screen.blit(self.background_img, (0, 0))
         self.draw_objects()
         self.draw_winner_line()
-
 
     @staticmethod
     def get_image(path, res):
@@ -86,9 +74,9 @@ class TicTacToe:
         if self.winner:
             pg.display.set_caption(
                 "Player " + self.winner + " wins !! PRESS SPACE TO BEGIN NEW GAME")
-        elif self.num_steps == 9: # board filled
-            pg.display.set_caption("Game over, no winners!! PRESS SPACE TO BEGIN NEW GAME")
-
+        elif self.num_steps == 9:  # board filled
+            pg.display.set_caption(
+                "Game over, no winners!! PRESS SPACE TO BEGIN NEW GAME")
 
     def run(self):
         self.print_caption()
@@ -119,11 +107,104 @@ class Game:
             self.check_events()
             pg.display.update()
             self.clock.tick(60)
-    
+
     def new_game(self):
         self.tic_tac_toe = TicTacToe(self)
 
 
-if __name__ == '__main__':
-    game = Game()
-    game.run()
+def draw_winner_line(game):
+    pg.draw.line(win, 'white', [game.winner_coordinates[0][0]*CELL_SIZE+CELL_CENTER, game.winner_coordinates[0][1]*CELL_SIZE + CELL_CENTER], [
+                 game.winner_coordinates[1][0]*CELL_SIZE+CELL_CENTER, game.winner_coordinates[1][1]*CELL_SIZE+CELL_CENTER], CELL_SIZE // 8)
+
+
+def redrawWindow(win, game, p):
+    pass
+
+
+def main():
+    run = True
+    clock = pg.time.Clock()
+    n = Network()
+    player = int(n.getp())
+    print("Assigned player number", player)
+
+    while run:
+        try:
+            game = n.send("get")
+        except:
+            run = False
+            print("Could not find the game...")
+            break
+        if game.bothWent():
+            redrawWindow(win, game, player)
+            # wait for half a second after drawing the window
+            pg.time.delay(500)
+            try:
+                game = n.send("reset")
+            except:
+                run = False
+                print("Could not find the game")
+                break
+
+            font = pg.font.SysFont(font_type, 90)
+            if (game.winner() == 1 and player == 1) or (game.winner() == 0 and player == 0):
+                draw_winner_line(game)
+                text = font.render("You Won!", 1, (255, 0, 0))
+                audio = pg.mixer.Sound("")
+            elif game.winner() == -1:
+                text = font.render("No spaces left...", 1, (255, 0, 0))
+                audio = pg.mixer.Sound("")
+            else:
+                text = font.render("You Lost....", 1, (255, 0, 0))
+                audio = pg.mixer.Sound("")
+
+            win.blit(text, (SCREEN_WIDTH/2 - text.get_width() /
+                     2, SCREEN_WIDTH/2 - text.get_height()/2))
+            pg.display.update()            
+            pg.mixer.Sound.play(audio)
+            pg.time.delay(2000)
+
+        for event in pg.event.get():
+            if event.type == pg.QUIT:
+                run = False 
+                pg.quit()
+            
+            if event.type == pg.MOUSEBUTTONDOWN:
+                pos = pg.mouse.get_pos()
+                c, r = map(int, pos)
+                text = str(c)+','+str(r)
+                if game.ready():
+                    if player == 0:
+                        if not game.p1went:
+                            n.send(text)
+                    else:
+                        if not game.p2went:
+                            n.send(text)
+        redrawWindow(win, game, player)
+
+
+
+def intro_screen():
+    run = True
+    clock = pg.time.Clock()
+
+    while run:
+        clock.tick(60)
+        win.fill((128, 128, 128))
+        font = pg.font.SysFont("comicsans", 60)
+        text = font.render("Click to Play!", 1, (255, 0, 0))
+        win.blit(text, (100, 200))
+        pg.display.update()
+
+        for event in pg.event.get():
+            if event.type == pg.QUIT:
+                pg.quit()
+                run = False
+            if event.type == pg.MOUSEBUTTONDOWN:
+                run = False
+
+    main()
+
+
+while True:
+    intro_screen()

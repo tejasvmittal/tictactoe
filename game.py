@@ -22,6 +22,7 @@ class Game:
                                  [(0, 2), (1, 1), (2, 0)],
                                  [(0, 1), (1, 1), (2, 1)]]
         self.winner = -1
+        self.winner_coordinates = None
 
     def isReady(self):
         return self.ready
@@ -32,7 +33,9 @@ class Game:
         and get the cell which is to be updated within the game array.
 
         """
-        self.game_array[cell[0]][cell[1]] = player
+        # convert cell to a list from string
+        cell = [int(i) for i in cell.split(',')]
+        self.game_array[cell[1]][cell[0]] = player
         if player == 0:
             self.p1went = True
         else:
@@ -45,6 +48,7 @@ class Game:
                 # indexing the string 'XO' based on the boolean condition
                 self.winner = 'XO'[get_sum == 0]
                 self.wins[self.winner] += 1
+                self.winner_coordinates = [line[0][::-1], line[2][::-1]]
         return self.winner  # return 'X' or 'O' or -1 if nobody wins.
 
     def reset(self):
