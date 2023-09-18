@@ -38,13 +38,18 @@ def threaded_client(conn, player, gameid):
             data = conn.recv(4096).decode()
             if gameid in games:
                 game = games[gameid]
+                print(data)
                 if not data:
+                    print("test line in if")
                     break
                 else:
+                    print("test line in else")
                     if data == "reset":
+                        print("test line if data is reset")
                         game.reset()
                     elif data != "get":
-                        game.play(player, data)
+                        print(player)
+                        game.play(player, data) # in this case data will contain position of mouse
                     conn.sendall(pickle.dumps(game))
             else:
                 break
@@ -57,7 +62,7 @@ def threaded_client(conn, player, gameid):
         print("Closing Game", gameid)
     except:
         pass
-    idCount -= 1
+    playercount -= 1
     conn.close()
 
 

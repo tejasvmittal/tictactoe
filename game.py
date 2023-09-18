@@ -1,7 +1,4 @@
-
 inf = float("inf")
-
-
 class Game:
     def __init__(self, id):
         self.p1went = False
@@ -35,13 +32,20 @@ class Game:
         """
         # convert cell to a list from string
         cell = [int(i) for i in cell.split(',')]
-        self.game_array[cell[1]][cell[0]] = player
-        if player == 0:
-            self.p1went = True
-        else:
-            self.p2went = True
+        print("Inside game.play!", cell)
+        if self.game_array[cell[1]][cell[0]] == inf:
+            print("Inside the if statement of game.play")
+            self.game_array[cell[1]][cell[0]] = player
+            if player == 0:
+                print("set p2went to false")
+                self.p1went = True
+                self.p2went = False
+            else:
+                print("set p1went to false")
+                self.p2went = True
+                self.p1went = False
 
-    def winner(self):
+    def getWinner(self):
         for line in self.possible_matches:
             get_sum = sum(self.game_array[i][j] for i, j in line)
             if get_sum == 0 or get_sum == 3:
@@ -50,6 +54,13 @@ class Game:
                 self.wins[self.winner] += 1
                 self.winner_coordinates = [line[0][::-1], line[2][::-1]]
         return self.winner  # return 'X' or 'O' or -1 if nobody wins.
+
+    def gameOver(self):
+        for line in self.game_array:
+            for i in line:
+                if i == inf:
+                    return False
+        return True
 
     def reset(self):
         self.p1went = False

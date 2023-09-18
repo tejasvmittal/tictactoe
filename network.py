@@ -1,6 +1,7 @@
 import socket 
 import pickle 
 
+
 class Network:
     def __init__(self):
         self.client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -15,13 +16,14 @@ class Network:
     def connect(self):
         try:
             self.client.connect(self.addr)
-            return self.client.recv(2048).decode() # will return the player number returned by the server.
+            return self.client.recv(2048).decode()  # will return the player number returned by the server.
         except:
             pass
 
     def send(self, data):
         try:
             self.client.send(str.encode(data))
-            return pickle.loads(self.client.recv(2048*2)) # returns the game object to the client
+            return pickle.loads(self.client.recv(2048*2))  # returns the game object to the client
+            # problem above ^
         except socket.error as e:
             print(e)
