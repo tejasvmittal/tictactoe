@@ -63,6 +63,12 @@ class Game:
         return True
 
     def reset(self):
+        # Clears the game board, starts a fresh game. Triggered when user presses space.
+        print("Executing reset")
+        self.game_array = [[inf, inf, inf],
+                           [inf, inf, inf],
+                           [inf, inf, inf]]
+        self.winner = -1
         self.p1went = False
         self.p2went = False
 

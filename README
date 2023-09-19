@@ -1,2 +1,2 @@
 #problems:
-1) Blinking of You lost and You won text. Possible fix will be to move all drawing statements into redraw window.
+1) Get the game to reset after game is over.

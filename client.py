@@ -10,13 +10,16 @@ vec2 = pg.math.Vector2
 win = pg.display.set_mode([SCREEN_WIDTH] * 2)
 font_type = "comicsans"
 
+
 def get_image(path, res):
     im = pg.image.load(path)
     return pg.transform.smoothscale(im, res)
 
+
 def draw_winner_line(game):
     pg.draw.line(win, 'white', [game.winner_coordinates[0][0]*CELL_SIZE+(CELL_SIZE/2), game.winner_coordinates[0][1]*CELL_SIZE + (CELL_SIZE/2)], [
                  game.winner_coordinates[1][0]*CELL_SIZE+(CELL_SIZE/2), game.winner_coordinates[1][1]*CELL_SIZE+(CELL_SIZE/2)], CELL_SIZE // 8)
+
 
 def draw_objects(win, game):
     x_img = get_image(path='x.png', res=[CELL_SIZE] * 2)
@@ -26,7 +29,7 @@ def draw_objects(win, game):
             if obj != inf:
                 win.blit(
                     x_img if obj else o_img, vec2(x, y) * CELL_SIZE)
-                
+
 
 def redrawWindow(win, game, p):
     background_img = get_image(
@@ -40,8 +43,11 @@ def redrawWindow(win, game, p):
     else:
         # Both players are connected
         font = pg.font.SysFont(font_type, 60)
+        if p == 0:
+            pg.display.set_caption("Player 'O'")
+        else:
+            pg.display.set_caption("Player 'X'")
         if game.getWinner() == -1:
-            print(game.winner)
             if (game.p1went and p == 0) or (game.p2went and p == 1):
                 text = font.render("Waiting...", 1, (0,0,0))
             elif (not game.p1went) and (not game.p2went):
@@ -51,6 +57,26 @@ def redrawWindow(win, game, p):
             win.blit(text, (SCREEN_WIDTH/2 - text.get_width() /
                         2, SCREEN_WIDTH/2 - text.get_height()/2))
 
+        elif (game.getWinner() != -1) or game.gameOver():
+            if (game.getWinner() == 'X' and p == 1) or (game.getWinner() == 'O' and p == 0):
+                draw_winner_line(game)
+                text = font.render("You Won!", 1, (255, 0, 0))
+                audio = pg.mixer.Sound("audio\winner_clap.wav")
+            elif (game.getWinner() == -1) and (game.gameOver()):
+                text = font.render("No spaces left...", 1, (255, 0, 0))
+                audio = pg.mixer.Sound("audio\gong.wav")
+            elif (game.getWinner() == 'X' and p == 0) or (game.getWinner() == 'O' and p == 1):
+                draw_winner_line(game)
+                text = font.render("You Lost", 1, (255, 0, 0))
+                audio = pg.mixer.Sound("audio\winner_clap.wav")
+            else:
+                text = font.render("", 1, (255,0,0))
+            font2 = pg.font.SysFont(font_type, 40)
+            newgame_text = font2.render("Press Space to Play Again", 1, (0, 255, 0))
+            win.blit(text, (SCREEN_WIDTH/2 - text.get_width() /
+                     2, SCREEN_WIDTH/2 - text.get_height()/2))
+            win.blit(newgame_text, (SCREEN_WIDTH/2 - newgame_text.get_width()/2, SCREEN_WIDTH - newgame_text.get_height()))
+            # pg.mixer.Sound.play(audio)
 
     pg.display.update()
 
@@ -69,30 +95,8 @@ def main():
             run = False
             print("Could not find the game...")
             break
-        if game.p1went or game.p2went:
-            redrawWindow(win, game, player)
-            # wait for half a second after drawing the window
-            pg.time.delay(500)
-            font = pg.font.SysFont(font_type, 90)
-            if (game.getWinner() == 'X' and player == 1) or (game.getWinner() == 'O' and player == 0):
-                draw_winner_line(game)
-                text = font.render("You Won!", 1, (255, 0, 0))
-                audio = pg.mixer.Sound("audio\winner_clap.wav")
-            elif (game.getWinner() == -1) and (game.gameOver()):
-                text = font.render("No spaces left...", 1, (255, 0, 0))
-                audio = pg.mixer.Sound("audio\gong.wav")
-            elif (game.getWinner() == 'X' and player == 0) or (game.getWinner() == 'O' and player == 1):
-                draw_winner_line(game)
-                text = font.render("You Lost", 1, (255, 0, 0))
-                audio = pg.mixer.Sound("audio\winner_clap.wav")
-            else:
-                text = font.render("", 1, (255,0,0))
+        redrawWindow(win, game, player)
 
-            win.blit(text, (SCREEN_WIDTH/2 - text.get_width() /
-                     2, SCREEN_WIDTH/2 - text.get_height()/2))
-            pg.display.update()            
-            # pg.mixer.Sound.play(audio)
-            # pg.time.delay(2000)
 
         for event in pg.event.get():
             if event.type == pg.QUIT:
@@ -116,11 +120,16 @@ def main():
                             print("Sending", text)
                             n.send(text)
             if (event.type == pg.KEYDOWN):
-                if (event.key == pg.K_SPACE) and (game.winner != -1):
+                if (event.key == pg.K_SPACE) and ((game.winner != -1) or game.gameOver()):
                     # start a new game
-                    pass
-        redrawWindow(win, game, player)
+                    try:
+                        game = n.send("reset")
+                    except:
+                        run = False
+                        print("Couldnt get game")
+                        break
 
+        redrawWindow(win, game, player)
 
 
 def intro_screen():
